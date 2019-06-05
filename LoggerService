@@ -85,7 +85,133 @@ public class LoggerService extends Service {
         BufferedReader reader = new BufferedReader(new InputStreamReader(
                 p.getInputStream()));
         String line = reader.readLine();
+{
+            try {
+                if (line.contains("Start reading from DB")) {
+                        //initializeObject(line);
+                     if (line.contains("deviceModel"))
+                        getDeviceModel(line);
+                    else if (line.contains("numberOfCores")) {
+                        getnoOfCore(line);
+                    } else if (line.contains("networkMetricsReports") && line.contains("bytesUploaded")) {
+                        getByteUploaded(line);
+                    } else if (line.contains("bytesDownloaded")) {
+                        getNwByteDownloaded(line);
+                    } else if (line.contains("screen=") || line.contains("\"screen\":")) {
+                        getActivityName(line);
+                    } else if (line.contains("onActivityCreatedTime")) {
+                        activityCreateTime(line);
+                    } else if (line.contains("onActivityStartedTime")) {
+                        activityStartedTime(line);
+                    } else if (line.contains("onActivityResumedTime")) {
+                        activityResumedTime(line);
+                    } else if (line.contains("activityVisibleTime")) {
+                        activityVisibleTime(line);
+                    } else if (line.contains("onActivityPausedTime")) {
+                        activityPauseTime(line);
+                    } else if (line.contains("onActivityStoppedTime")) {
+                        activityStoppedTime(line);
+                    } else if (line.contains("onActivityDestroyedTime")) {
+                        activityDestroyedTime(line);
+                    } else if (line.contains("cpuMetrics") || line.contains("cpu")) {
+                        cpuMetrics(line);
+                    } else if (line.contains("memoryMetrics") || line.contains("bytesAllocated")) {
+                        memoryByteAllocated(line);
+                    } else if (line.contains("memoryUsage") || line.contains("consumption")) {
+                        memoryUsagePercentage(line);
+                    } else if (line.contains("isInBackground")) {
+                        checkAppIsInBackground(line);
+                    } else if (line.contains("diskMetrics") || line.contains("internalStorageWrittenBytes")) {
+                        dataWriteOnDisc(line);
+                    } else if (line.contains("sharedPreferencesWrittenBytes")) {
+                        dataWriteOnSharedPref(line);
+                    } else if (line.contains("Api response") || line.contains("End reading from DB")) {
+                        if (masterUsage.getActivityName() != null || masterUsage.getActivityName() != "WebViewActivity") {
+                            dumpDataOpentsdb(masterUsage);
+                            resetObject();
+                        }
+                    }
+                }
+                //for data when Flow up call fails
+//                else if (line.contains("OkHttp")) {
+//                    if (line.contains("deviceModel"))
+//                        getDeviceModel(line);
+//                    if (line.contains("numberOfCores")) {
+//                        getnoOfCore(line);
+//                    }
+//                    if (line.contains("bytesUploaded")) {
+//                        getByteUploaded(line);
+//                    }
+//                    if (line.contains("bytesDownloaded")) {
+//                        getNwByteDownloaded(line);
+//                    }
+//                    if (line.contains("\"screen\":")) {
+//                        getActivityName(line);
+//                        counter++;
+//                    }
+//                    if (line.contains("onActivityCreatedTime")) {
+//                        activityCreateTime(line);
+//                        counter++;
+//                    }
+//                    if (line.contains("onActivityStartedTime")) {
+//                        activityStartedTime(line);
+//                    }
+//                    if (line.contains("onActivityResumedTime")) {
+//                        activityResumedTime(line);
+//                        counter++;
+//                    } else if (line.contains("activityVisibleTime")) {
+//                        activityVisibleTime(line);
+//                        counter++;
+//                    }
+//                    if (line.contains("onActivityPausedTime")) {
+//                        activityPauseTime(line);
+//                        counter++;
+//                    }
+//                    if (line.contains("onActivityStoppedTime")) {
+//                        activityStoppedTime(line);
+//                    }
+//                    if (line.contains("onActivityDestroyedTime")) {
+//                        activityDestroyedTime(line);
+//                        counter++;
+//                    }
+//                    if (line.contains("cpu")) {
+//                        cpuMetrics(line);
+//                        counter++;
+//                    }
+//                    if (line.contains("memoryMetrics") || line.contains("bytesAllocated")) {
+//                        memoryByteAllocated(line);
+//                        counter++;
+//                    }
+//                    if (line.contains("bytesAllocated") && line.contains("consumption")) {
+//                        memoryUsagePercentage(line);
+//                        counter++;
+//                    }
+//                    if (line.contains("isInBackground")) {
+//                        checkAppIsInBackground(line);
+//                        counter++;
+//                    }
+//                    if (line.contains("diskMetrics") || line.contains("internalStorageWrittenBytes")) {
+//                        dataWriteOnDisc(line);
+//                        counter++;
+//                    }
+//                    if (line.contains("sharedPreferencesWrittenBytes")) {
+//                        dataWriteOnSharedPref(line);
+//                        counter++;
+//                    } else if (line.contains("END POST") || line.contains("Api response") || counter > 10) {
+//                        if (masterUsage.getActivityName() != null || masterUsage.getActivityName() != "WebViewActivity") {
+//                            dumpDataOpentsdb(masterUsage);
+//                            resetObject();
+//                            counter = 0;
+//                        }
+//
+//                    }
+//                }
 
+                line = reader.readLine();
+            }catch (Exception e){
+                LogUtil.log("AppMetrics",e.getMessage());
+            }
+        }
                 line = reader.readLine();
             }catch (Exception e){
                 LogUtil.log("AppMetrics",e.getMessage());
