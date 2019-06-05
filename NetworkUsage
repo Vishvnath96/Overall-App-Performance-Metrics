@@ -1,0 +1,31 @@
+package com.mmt.travel.app.testmetrictracer.model;
+
+import com.mmt.travel.app.common.model.QueryKey;
+
+/**
+ * Created by mmt6054 on 15/06/18.
+ */
+
+public class NetworkUsage extends Metric {
+    @QueryKey("direct")
+    private float byteUploaded;
+    @QueryKey("direct")
+    private float byteDownloaded;
+
+    public float getByteUploaded() {
+        return byteUploaded;
+    }
+
+    public void setByteUploaded(float byteUploaded) {
+        this.byteUploaded = byteUploaded;
+    }
+
+    public float getByteDownloaded() {
+        return byteDownloaded;
+    }
+
+    public void setByteDownloaded(float byteDownloaded) {
+        this.byteDownloaded = byteDownloaded;
+    }
+
+}
