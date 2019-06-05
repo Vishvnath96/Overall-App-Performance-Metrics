@@ -1,0 +1,148 @@
+package com.mmt.travel.app.testmetrictracer.model;
+
+import com.mmt.travel.app.common.model.QueryKey;
+
+/**
+ * Created by mmt6054 on 15/06/18.
+ */
+
+public class MasterUsage {
+    @QueryKey("direct")
+    private String deviceName;
+    @QueryKey("direct")
+    private int noOfCpuCore;
+    private boolean isInBackground;
+    @QueryKey("direct")
+    private String apkVersion;
+    @QueryKey("direct")
+    private String osVersion;
+    private int reportId;
+    @QueryKey("direct")
+    private String screenDensity;
+    @QueryKey("direct")
+    private String activityName;
+    @QueryKey("nested")
+    private ActivityLifeCycle activityLifeCycle;
+    @QueryKey("nested")
+    private CpuUsage cpuUsage;
+    @QueryKey("nested")
+    private DiskUsage diskUsage;
+    @QueryKey("nested")
+    private FrameUsage frameUsage;
+    @QueryKey("nested")
+    private MemoryUsage memoryUsage;
+    @QueryKey("nested")
+    private NetworkUsage networkUsage;
+
+    public String getDeviceName() {
+        return deviceName;
+    }
+
+    public void setDeviceName(String deviceName) {
+        this.deviceName = deviceName;
+    }
+
+    public int getNoOfCpuCore() {
+        return noOfCpuCore;
+    }
+
+    public void setNoOfCpuCore(int noOfCpuCore) {
+        this.noOfCpuCore = noOfCpuCore;
+    }
+
+    public boolean isInBackground() {
+        return isInBackground;
+    }
+
+    public void setInBackground(boolean inBackground) {
+        isInBackground = inBackground;
+    }
+
+    public String getApkVer() {
+        return apkVersion;
+    }
+
+    public void setApkVer(String apkVer) {
+        this.apkVersion = apkVer;
+    }
+
+    public String getOsVersion() {
+        return osVersion;
+    }
+
+    public void setOsVersion(String osVersion) {
+        this.osVersion = osVersion;
+    }
+
+    public ActivityLifeCycle getActivityLifeCycle() {
+        return activityLifeCycle;
+    }
+
+    public void setActivityLifeCycle(ActivityLifeCycle activityLifeCycle) {
+        this.activityLifeCycle = activityLifeCycle;
+    }
+
+    public CpuUsage getCpuUsage() {
+        return cpuUsage;
+    }
+
+    public void setCpuUsage(CpuUsage cpuUsage) {
+        this.cpuUsage = cpuUsage;
+    }
+
+    public DiskUsage getDiskUsage() {
+        return diskUsage;
+    }
+
+    public void setDiskUsage(DiskUsage diskUsage) {
+        this.diskUsage = diskUsage;
+    }
+
+    public FrameUsage getFrameUsage() {
+        return frameUsage;
+    }
+
+    public void setFrameUsage(FrameUsage frameUsage) {
+        this.frameUsage = frameUsage;
+    }
+
+    public MemoryUsage getMemoryUsage() {
+        return memoryUsage;
+    }
+
+    public void setMemoryUsage(MemoryUsage memoryUsage) {
+        this.memoryUsage = memoryUsage;
+    }
+
+    public NetworkUsage getNetworkUsage() {
+        return networkUsage;
+    }
+
+    public void setNetworkUsage(NetworkUsage networkUsage) {
+        this.networkUsage = networkUsage;
+    }
+
+    public int getReportId() {
+        return reportId;
+    }
+
+    public void setReportId(int reportId) {
+        this.reportId = reportId;
+    }
+
+    public String getScreenDensity() {
+        return screenDensity;
+    }
+
+    public void setScreenDensity(String screenDensity) {
+        this.screenDensity = screenDensity;
+    }
+
+    public String getActivityName() {
+        return activityName;
+    }
+
+    public void setActivityName(String activityName) {
+        this.activityName = activityName;
+    }
+}
