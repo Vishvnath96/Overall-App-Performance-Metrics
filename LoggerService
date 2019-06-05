@@ -1,0 +1,499 @@
+package com.mmt.travel.app.testmetrictracer.service;
+
+import android.annotation.SuppressLint;
+import android.app.Service;
+import android.content.Intent;
+import android.os.IBinder;
+import android.util.Log;
+
+import com.flipkart.batching.toolbox.LogUtil;
+import com.mmt.travel.app.mobile.MMTApplication;
+import com.mmt.travel.app.testmetrictracer.model.ActivityLifeCycle;
+import com.mmt.travel.app.testmetrictracer.model.CpuUsage;
+import com.mmt.travel.app.testmetrictracer.model.DiskUsage;
+import com.mmt.travel.app.testmetrictracer.model.MasterUsage;
+import com.mmt.travel.app.testmetrictracer.model.MemoryUsage;
+import com.mmt.travel.app.testmetrictracer.model.NetworkUsage;
+import com.mmt.travel.app.testmetrictracer.util.CaptureTracingData;
+import com.mmt.travel.app.testmetrictracer.util.MetricUtil;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+public class LoggerService extends Service {
+
+    final String logger = "TracerLog";
+    MasterUsage masterUsage;
+    NetworkUsage networkUsage;
+    ActivityLifeCycle activityLifeCycle;
+    CpuUsage cpuUsage;
+    MemoryUsage memoryUsage;
+    DiskUsage diskUsage;
+
+    public static int isRunning = 1;
+
+    public LoggerService() {
+    }
+
+    @Override
+    public void onCreate() {
+        masterUsage = new MasterUsage();
+        networkUsage = new NetworkUsage();
+        activityLifeCycle = new ActivityLifeCycle();
+        cpuUsage = new CpuUsage();
+        memoryUsage = new MemoryUsage();
+        diskUsage = new DiskUsage();
+    }
+
+    @SuppressLint("WrongConstant")
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        super.onStartCommand(intent, flags, startId);
+        Runnable r = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    while (true && !MMTApplication.isEspressoRunning) {
+                        getAppMetrics();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+        Thread t = new Thread(r);
+        t.start();
+        //stopSelf();
+        return 1;
+    }
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        // TODO: Return the communication channel to the service.
+        throw new UnsupportedOperationException("Not yet implemented");
+    }
+
+    private void getAppMetrics() throws IOException {
+        long startTime = System.currentTimeMillis();
+        Process p;
+        int counter = 0;
+
+        p = Runtime.getRuntime().exec("logcat");
+        BufferedReader reader = new BufferedReader(new InputStreamReader(
+                p.getInputStream()));
+        String line = reader.readLine();
+
+                line = reader.readLine();
+            }catch (Exception e){
+                LogUtil.log("AppMetrics",e.getMessage());
+            }
+        }
+    }
+
+    private void dumpDataOpentsdb(MasterUsage masterUsage) {
+        try {
+            CaptureTracingData.dumpData(masterUsage);
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void dataWriteOnSharedPref(String line) {
+        int counter = 0;
+        String sharedPrefByte = "";
+        double sharePrefData = 0;
+        Pattern pattern = Pattern.compile("sharedPreferencesWrittenBytes=(\\d*)");
+        Pattern pattern2 = Pattern.compile("sharedPreferencesWrittenBytes..(\\w*)");
+        Matcher matcher = pattern.matcher(line);
+        Matcher matcher2 = pattern2.matcher(line);
+        try {
+            if (matcher.find()) {
+                sharedPrefByte = matcher.group(1);
+                sharePrefData = Integer.parseInt(sharedPrefByte)/1000;
+                counter++;
+            } else if (matcher2.find() && counter == 0) {
+                sharedPrefByte = matcher2.group(1);
+                sharePrefData = Integer.parseInt(sharedPrefByte)/1000; //in kb
+            }
+            if(sharePrefData != 0){
+                diskUsage.setSharedPrefData(sharePrefData);
+                masterUsage.setDiskUsage(diskUsage);
+            }
+        } catch (Exception e){
+            Log.d(logger,e.getMessage());
+        }
+    }
+
+    private void dataWriteOnDisc(String line) {
+        int counter = 0;
+        String diskDataUsage = "";
+        double internalStorage = 0;
+        Pattern pattern = Pattern.compile("DiskMetric.internalStorageWrittenBytes=(\\d*)");
+        Pattern pattern2 = Pattern.compile("internalStorageWrittenBytes..(\\w*)");
+        Matcher matcher = pattern.matcher(line);
+        Matcher matcher2 = pattern2.matcher(line);
+        try {
+            if (matcher.find()) {
+                diskDataUsage = matcher.group(1);
+                internalStorage = Integer.parseInt(diskDataUsage)/1000; //in kb
+                counter++;
+            } else if (matcher2.find() && counter == 0) {
+                diskDataUsage = matcher2.group(1);
+                internalStorage = Integer.parseInt(diskDataUsage)/1000;
+            }
+            if(internalStorage != 0){
+                diskUsage.setInternalStorageData(internalStorage);
+                masterUsage.setDiskUsage(diskUsage);
+            }
+        }catch (Exception e){
+            Log.d(logger,e.getMessage());
+        }
+    }
+
+    private void checkAppIsInBackground(String line) {
+        Pattern pattern = Pattern.compile("isInBackground..(\\w*)");
+        Matcher matcher = pattern.matcher(line);
+        try{
+            if(matcher.find()){
+                String isBackGround = matcher.group(1);
+                masterUsage.setInBackground(Boolean.parseBoolean(isBackGround.trim()));
+            }
+
+        }catch (Exception e ){
+
+        }
+    }
+
+    private void memoryUsagePercentage(String line) {
+        int counter = 0;
+        float memoryUsed = 0;
+        Pattern pattern = Pattern.compile("memoryUsage=(\\d*)");
+        Pattern pattern2 = Pattern.compile("consumption..(\\w*)");
+        Matcher matcher = pattern.matcher(line);
+        Matcher matcher2 = pattern2.matcher(line);
+        try {
+            if (matcher.find()) {
+                String memUsage = matcher.group(1);
+                memoryUsed = Float.parseFloat(memUsage.trim());
+                counter++;
+            } else if (matcher2.find() && counter == 0) {
+                String memUsage = matcher2.group(1);
+                memoryUsed = Float.parseFloat(memUsage.trim());
+            }
+            if(memoryUsed != 0){
+                memoryUsage.setMemoryConsumption(memoryUsed);
+                masterUsage.setMemoryUsage(memoryUsage);
+            }
+        }catch (Exception e){
+            //Log.d(logger,e.getMessage());
+        }
+    }
+
+    private void memoryByteAllocated(String line) {
+        int counter = 0;
+        double byteAllocated = 0;
+        String bytes = "";
+        Pattern pattern = Pattern.compile("MemoryMetric.bytesAllocated=(\\d*)");
+        Pattern pattern2 = Pattern.compile("bytesAllocated..(\\w*)");
+        Matcher matcher = pattern.matcher(line);
+        Matcher matcher2 = pattern2.matcher(line);
+        try {
+            if (matcher.find()) {
+                bytes = matcher.group(1);
+                byteAllocated = Integer.parseInt(bytes)/1000;  //(double)Integer.parseInt(matcher.group(1))/1000
+                counter++;
+            } else if (matcher2.find() && counter == 0) {
+                bytes = matcher2.group(1);
+                byteAllocated = Integer.parseInt(bytes)/1000;
+            }
+            if(byteAllocated != 0){
+                memoryUsage.setByteAllocated(byteAllocated);
+                masterUsage.setMemoryUsage(memoryUsage);
+            }
+        }catch (Exception e){
+            Log.d(logger,e.getMessage());
+        }
+    }
+
+    private void cpuMetrics(String line) {
+        int counter = 0;
+        String cpuUsed = "";
+        Float cpu = null;
+        Pattern pattern = Pattern.compile("CPUMetric.cpuUsage=(\\d*)");
+        Pattern pattern2 = Pattern.compile("cpu.....consumption..(\\d*)");
+        Matcher matcher = pattern.matcher(line);
+        Matcher matcher2 = pattern2.matcher(line);
+        try {
+            if (matcher.find()) {
+                cpuUsed = matcher.group(1);
+                cpu = Float.parseFloat(cpuUsed);
+                counter++;
+            } else if (matcher2.find() && counter == 0) {
+                cpuUsed = matcher2.group(1);
+                cpu = Float.parseFloat(cpuUsed);
+            }
+            if(cpu != null){
+                cpuUsage.setCpuConsumption(cpu);
+                masterUsage.setCpuUsage(cpuUsage);
+            }
+        }catch (Exception e){
+            //Log.d(logger,e.getMessage());
+        }
+    }
+
+    private void activityDestroyedTime(String line) {
+        Float destroyTime;
+        try {
+            destroyTime = MetricUtil.getActivityLifeCycleTime(line);
+            if (destroyTime == null && line.contains("OkHttp")) {
+                Pattern pattern = Pattern.compile("onActivityDestroyedTime....mean..(\\d*.\\d{2})");
+                Matcher matcher = pattern.matcher(line);
+                if (matcher.find()) {
+                    String time = matcher.group(1);
+                    destroyTime = Float.parseFloat(time);
+                }
+            }
+            if(destroyTime!= null){
+                activityLifeCycle.setOnDestroyTime(destroyTime);
+                masterUsage.setActivityLifeCycle(activityLifeCycle);
+            }
+        }catch (Exception e){
+            //Log.d(logger,e.getLocalizedMessage());
+        }
+    }
+
+    private void activityStoppedTime(String line) {
+        Float stoppedTime;
+        try {
+            stoppedTime = MetricUtil.getActivityLifeCycleTime(line);
+            if (stoppedTime == null && line.contains("OkHttp")) {
+                Pattern pattern = Pattern.compile("onActivityStoppedTime....mean..(\\d*.\\d{2})");
+                Matcher matcher = pattern.matcher(line);
+                if (matcher.find()) {
+                    String time = matcher.group(1);
+                    stoppedTime = Float.parseFloat(time);
+                }
+            }
+            if(stoppedTime != null){
+                activityLifeCycle.setActivityStoppedTime(stoppedTime);
+                masterUsage.setActivityLifeCycle(activityLifeCycle);
+            }
+        }catch (Exception e){
+            Log.d(logger,e.getLocalizedMessage());
+        }
+    }
+
+    private void activityPauseTime(String line) {
+        Float pausedTime;
+        try {
+            pausedTime = MetricUtil.getActivityLifeCycleTime(line);
+            if (pausedTime == null && line.contains("OkHttp")) {
+                Pattern pattern = Pattern.compile("onActivityPausedTime....mean..(\\d*.\\d{2})");
+                Matcher matcher = pattern.matcher(line);
+                if (matcher.find()) {
+                    String time = matcher.group(1);
+                    pausedTime = Float.parseFloat(time);
+                }
+            }
+            if(pausedTime != null){
+                activityLifeCycle.setOnPauseTime(pausedTime);
+                masterUsage.setActivityLifeCycle(activityLifeCycle);
+            }
+        }catch (Exception e){
+            //Log.d(logger,e.getLocalizedMessage());
+        }
+    }
+
+    private void activityVisibleTime(String line) {
+        Float visibleTime;
+        try {
+            visibleTime = MetricUtil.getActivityLifeCycleTime(line);
+            if (visibleTime == null && line.contains("OkHttp")) {
+                Pattern pattern = Pattern.compile("activityVisibleTime....mean..(\\d*.\\d{2})");
+                Matcher matcher = pattern.matcher(line);
+                if (matcher.find()) {
+                    String time = matcher.group(1);
+                    visibleTime = Float.parseFloat(time);
+                }
+            }
+            if(visibleTime != null){
+                activityLifeCycle.setActivityVisibleTime(visibleTime);
+                masterUsage.setActivityLifeCycle(activityLifeCycle);
+            }
+        }catch (Exception e){
+            Log.d(logger,e.getLocalizedMessage());
+        }
+    }
+
+    private void activityResumedTime(String line) {
+        Float resumedTime;
+        try {
+            resumedTime = MetricUtil.getActivityLifeCycleTime(line);
+            if (resumedTime == null && line.contains("OkHttp")) {
+                Pattern pattern = Pattern.compile("onActivityResumedTime....mean..(\\d*.\\d{2})");
+                Matcher matcher = pattern.matcher(line);
+                if (matcher.find()) {
+                    String time = matcher.group(1);
+                    resumedTime = Float.parseFloat(time);
+                }
+            }
+            if(resumedTime != null){
+                activityLifeCycle.setOnResumeTime(resumedTime);
+                masterUsage.setActivityLifeCycle(activityLifeCycle);
+            }
+        }catch (Exception e){
+            //Log.d(logger,e.getLocalizedMessage());
+        }
+    }
+
+    private void activityStartedTime(String line) {
+        Float startedTime;
+        try {
+            startedTime = MetricUtil.getActivityLifeCycleTime(line);
+            if (startedTime == null && line.contains("OkHttp")) {
+                Pattern pattern = Pattern.compile("onActivityStartedTime....mean..(\\d*.\\d{2})");
+                Matcher matcher = pattern.matcher(line);
+                if (matcher.find()) {
+                    String time = matcher.group(1);
+                    startedTime = Float.parseFloat(time);
+                }
+            }
+            if(startedTime != null){
+                activityLifeCycle.setActivityStartedTime(startedTime);
+                masterUsage.setActivityLifeCycle(activityLifeCycle);
+            }
+
+        }catch (Exception e){
+            //Log.d(logger,e.getLocalizedMessage());
+        }
+    }
+
+    private void activityCreateTime(String line){
+        Float onCreateTime;
+        try {
+            onCreateTime = MetricUtil.getActivityLifeCycleTime(line);
+            if (onCreateTime == null && line.contains("OkHttp")) {
+                Pattern pattern = Pattern.compile("onActivityCreatedTime....mean..(\\d*.\\d{2})");//onActivityCreatedTime....mean..(\d*.\d{2})
+                Matcher matcher = pattern.matcher(line);
+                if (matcher.find()) {
+                    String time = matcher.group(1);
+                    onCreateTime = Float.parseFloat(time);
+                }
+            }
+            if(onCreateTime != null){
+                activityLifeCycle.setOnCreateTime(onCreateTime);
+                masterUsage.setActivityLifeCycle(activityLifeCycle);
+            }
+        }catch (Exception e){
+            //Log.d(logger,e.getLocalizedMessage());
+        }
+    }
+
+    private void getActivityName(String line) {
+        Pattern pattern = Pattern.compile("screen=(\\w*)");
+        Pattern pattern2 = Pattern.compile("screen\":.(\\w*)");
+        Matcher matcher = pattern.matcher(line);
+        Matcher matcher2 = pattern2.matcher(line);
+        try {
+            if (matcher.find()) {
+                String activityName = matcher.group(1);
+                masterUsage.setActivityName(activityName.trim());
+            } else if (matcher2.find()) {
+                String activityName = matcher2.group(1);
+                masterUsage.setActivityName(activityName.trim());
+            }
+        }catch (Exception e){
+            //Log.d(logger,e.getLocalizedMessage());
+        }
+    }
+
+    private void getNwByteDownloaded(String line) {
+        int counter = 0;
+        Pattern pattern1 = Pattern.compile("bytesDownloaded=(\\d*)");
+        Pattern pattern2 = Pattern.compile("bytesDownloaded..(\\d*)");
+        Matcher matcher1 = pattern1.matcher(line);
+        Matcher matcher2 = pattern2.matcher(line);
+        try {
+            if (matcher1.find()) {
+                String byteDownloaded = matcher1.group(1);
+                networkUsage.setByteDownloaded(Float.parseFloat(byteDownloaded.trim()));
+                masterUsage.setNetworkUsage(networkUsage);
+                counter++;
+            } else if (matcher2.find() && counter == 0) {
+                String byteDownloaded = matcher2.group(1);
+                networkUsage.setByteDownloaded(Float.parseFloat(byteDownloaded.trim()));
+                masterUsage.setNetworkUsage(networkUsage);
+            }
+        }catch (Exception e){
+            //Log.d(logger,e.getLocalizedMessage());
+        }
+    }
+
+    private void getByteUploaded(String line) {
+        int counter = 0;
+        Pattern pattern1 = Pattern.compile("bytesUploaded=(\\d*)");
+        Pattern pattern2 = Pattern.compile("bytesUploaded..(\\d*)");
+        Matcher matcher1 = pattern1.matcher(line);
+        Matcher matcher2 = pattern2.matcher(line);
+        try {
+            if (matcher1.find()) {
+                String byteUploaded = matcher1.group(1);
+                networkUsage.setByteUploaded(Float.parseFloat(byteUploaded.trim()));
+                masterUsage.setNetworkUsage(networkUsage);
+                counter++;
+            } else if (matcher2.find() && counter == 0) {
+                String byteUploaded = matcher2.group(1);
+                networkUsage.setByteUploaded(Float.parseFloat(byteUploaded.trim()));
+                masterUsage.setNetworkUsage(networkUsage);
+            }
+        }catch (Exception e){
+            //Log.d(logger,e.getLocalizedMessage());
+        }
+    }
+
+    private void getnoOfCore(String line) {
+        Pattern pattern = Pattern.compile("numberOfCores=(\\d*)");
+        Matcher matcher = pattern.matcher(line);
+        try {
+            if (matcher.find()) {
+                String noOfCore = matcher.group(1);
+                masterUsage.setNoOfCpuCore(Integer.parseInt(noOfCore.trim()));
+            }
+        }catch (Exception e){
+            //Log.d(logger,e.getLocalizedMessage());
+        }
+    }
+
+    private void getDeviceModel(String line) {
+        Pattern pattern = Pattern.compile("deviceModel=(\\w*.\\w*)");
+        Matcher matcher = pattern.matcher(line);
+        try {
+            if (matcher.find()) {
+                String deviceModel = matcher.group(1);
+                deviceModel = deviceModel.replace(" ","-");
+                masterUsage.setDeviceName(deviceModel.trim());
+            }
+        }catch (Exception e){
+            //Log.d(logger,e.getLocalizedMessage());
+        }
+    }
+
+    private void resetObject() {
+        masterUsage.setActivityName(null);
+        activityLifeCycle.setOnCreateTime(0);
+        activityLifeCycle.setActivityStartedTime(0);
+        activityLifeCycle.setOnDestroyTime(0);
+        activityLifeCycle.setOnPauseTime(0);
+        activityLifeCycle.setOnResumeTime(0);
+        cpuUsage.setCpuConsumption(0);
+        diskUsage.setInternalStorageData(0);
+        diskUsage.setSharedPrefData(0);
+        memoryUsage.setByteAllocated(0);
+        memoryUsage.setMemoryConsumption(0);
+        networkUsage.setByteDownloaded(0);
+        networkUsage.setByteUploaded(0);
+    }
+  }
