@@ -1,0 +1,31 @@
+package com.mmt.travel.app.testmetrictracer.model;
+
+import com.mmt.travel.app.common.model.QueryKey;
+
+/**
+ * Created by mmt6054 on 15/06/18.
+ */
+
+public class DiskUsage extends Metric {
+    @QueryKey("direct")
+    private double internalStorageData;
+    @QueryKey("direct")
+    private double sharedPrefData;
+
+    public double getInternalStorageData() {
+        return internalStorageData;
+    }
+
+    public void setInternalStorageData(double internalStorageDat) {
+        this.internalStorageData = internalStorageDat;
+    }
+
+    public double getSharedPrefData() {
+        return sharedPrefData;
+    }
+
+    public void setSharedPrefData(double sharedPrefData) {
+        this.sharedPrefData = sharedPrefData;
+    }
+
+}
