@@ -1,0 +1,81 @@
+package com.mmt.travel.app.testmetrictracer.model;
+
+import com.mmt.travel.app.common.model.QueryKey;
+
+/**
+ * Created by mmt6054 on 15/06/18.
+ */
+
+public class ActivityLifeCycle extends Metric {
+    @QueryKey("direct")
+    private float onCreateTime;
+    @QueryKey("direct")
+    private float onResumeTime;
+    @QueryKey("direct")
+    private float onPauseTime;
+    @QueryKey("direct")
+    private float onDestroyTime;
+    @QueryKey("direct")
+    private float activityVisibleTime;
+    @QueryKey("direct")
+    private float activityStartedTime;
+    @QueryKey("direct")
+    private float activityStoppedTime;
+
+    public float getOnCreateTime() {
+        return onCreateTime;
+    }
+
+    public void setOnCreateTime(float onCreateTime) {
+        this.onCreateTime = onCreateTime;
+    }
+
+    public float getOnResumeTime() {
+        return onResumeTime;
+    }
+
+    public void setOnResumeTime(float onResumeTime) {
+        this.onResumeTime = onResumeTime;
+    }
+
+    public float getOnPauseTime() {
+        return onPauseTime;
+    }
+
+    public void setOnPauseTime(float onPauseTime) {
+        this.onPauseTime = onPauseTime;
+    }
+
+    public float getOnDestroyTime() {
+        return onDestroyTime;
+    }
+
+    public void setOnDestroyTime(float onDestroyTime) {
+        this.onDestroyTime = onDestroyTime;
+    }
+
+    public float getActivityVisibleTime() {
+        return activityVisibleTime;
+    }
+
+    public void setActivityVisibleTime(float activityVisibleTime) {
+        this.activityVisibleTime = activityVisibleTime;
+    }
+
+
+    public float getActivityStartedTime() {
+        return activityStartedTime;
+    }
+
+    public void setActivityStartedTime(float activityStartedTime) {
+        this.activityStartedTime = activityStartedTime;
+    }
+
+    public float getActivityStoppedTime() {
+        return activityStoppedTime;
+    }
+
+    public void setActivityStoppedTime(float activityStoppedTime) {
+        this.activityStoppedTime = activityStoppedTime;
+    }
+}
