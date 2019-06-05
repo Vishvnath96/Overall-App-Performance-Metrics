@@ -1,0 +1,20 @@
+package com.mmt.travel.app.testmetrictracer.model;
+
+import com.mmt.travel.app.common.model.QueryKey;
+
+/**
+ * Created by mmt6054 on 15/06/18.
+ */
+
+public class CpuUsage {
+    @QueryKey("direct")
+    private float cpuConsumption;
+
+    public float getCpuConsumption() {
+        return cpuConsumption;
+    }
+
+    public void setCpuConsumption(float cpuConsumption) {
+        this.cpuConsumption = cpuConsumption;
+    }
+}
