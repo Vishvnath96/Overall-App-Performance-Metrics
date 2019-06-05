@@ -1,0 +1,31 @@
+package com.mmt.travel.app.testmetrictracer.model;
+
+import com.mmt.travel.app.common.model.QueryKey;
+
+/**
+ * Created by mmt6054 on 15/06/18.
+ */
+
+public class MemoryUsage extends Metric{
+    @QueryKey("direct")
+    private double memoryConsumption;
+    @QueryKey("direct")
+    private double byteAllocated;
+
+
+    public double getMemoryConsumption() {
+        return memoryConsumption;
+    }
+
+    public void setMemoryConsumption(double memoryConsumption) {
+        this.memoryConsumption = memoryConsumption;
+    }
+
+    public double getByteAllocated() {
+        return byteAllocated;
+    }
+
+    public void setByteAllocated(double byteAllocated) {
+        this.byteAllocated = byteAllocated;
+    }
+}
